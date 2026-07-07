@@ -1,0 +1,42 @@
+classDiagram
+    %% PawPal+ final architecture (Phase 6) — matches pawpal_system.py.
+
+    class Task {
+        +str description
+        +str time
+        +str frequency
+        +bool completed
+        +date due_date
+        +mark_complete() None
+        +next_occurrence() Task
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +list~Task~ tasks
+        +add_task(task Task) None
+        +get_tasks() list~Task~
+    }
+
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +add_pet(pet Pet) None
+        +get_all_tasks() list~Task~
+    }
+
+    class Scheduler {
+        +Owner owner
+        +todays_schedule() list~Task~
+        +sort_by_time(tasks) list~Task~
+        +filter_by_status(completed) list~Task~
+        +filter_by_pet(pet_name) list~Task~
+        +detect_conflicts() list~str~
+        +complete_task(task) Task
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Pet "1" --> "*" Task : has
+    Scheduler "1" --> "1" Owner : reads tasks from
+    Scheduler ..> Task : creates recurrence

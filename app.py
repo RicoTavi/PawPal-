@@ -74,17 +74,45 @@ scheduler = Scheduler(owner)
 if not owner.get_all_tasks():
     st.info("No tasks yet. Add a pet and some tasks above.")
 else:
-    for pet in owner.pets:
-        if not pet.tasks:
-            continue
-        st.markdown(f"**{pet.name}** ({pet.species})")
-        rows = [
-            {
-                "Time": task.time,
-                "Task": task.description,
-                "Frequency": task.frequency,
-                "Done": "✅" if task.completed else "⬜",
-            }
-            for task in pet.get_tasks()
+    # Conflict warnings from the Scheduler.
+    for warning in scheduler.detect_conflicts():
+        st.warning(warning)
+
+    # A single, chronologically sorted table across all pets. We pair each task
+    # with its pet name, then sort by the Scheduler's ordering.
+    pet_of = {id(task): pet.name for pet in owner.pets for task in pet.tasks}
+    rows = [
+        {
+            "Time": task.time,
+            "Pet": pet_of[id(task)],
+            "Task": task.description,
+            "Frequency": task.frequency,
+            "Done": "✅" if task.completed else "⬜",
+        }
+        for task in scheduler.todays_schedule()
+    ]
+    st.table(rows)
+
+    pending = scheduler.filter_by_status(completed=False)
+    done = scheduler.filter_by_status(completed=True)
+    st.caption(f"{len(pending)} pending · {len(done)} completed")
+
+    # --- Complete a task (shows recurrence in action) ---------------------
+    if pending:
+        st.markdown("**✔️ Complete a task**")
+        labels = [
+            f"{pet_of[id(t)]} — {t.time} {t.description} [{t.frequency}]"
+            for t in pending
         ]
-        st.table(rows)
+        choice = st.selectbox("Which task did you finish?", range(len(pending)),
+                              format_func=lambda i: labels[i])
+        if st.button("Mark complete"):
+            follow_up = scheduler.complete_task(pending[choice])
+            if follow_up is not None:
+                st.success(
+                    f"Done! Since it's a {follow_up.frequency} task, the next one "
+                    f"is scheduled for {follow_up.due_date}."
+                )
+            else:
+                st.success("Done! Marked complete.")
+            st.rerun()

@@ -1,6 +1,17 @@
 # PawPal+ (Module 2 Project)
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+**PawPal+** is a Streamlit app that helps a pet owner plan daily care tasks for
+their pets. You add pets and tasks, and the `Scheduler` organizes them into a
+sorted, conflict-aware daily plan.
+
+## ✨ Features
+
+- **Multi-pet management** — one `Owner` tracks many `Pet`s, each with its own tasks.
+- **Chronological scheduling** — tasks are sorted by time (`HH:MM`) into a single daily plan.
+- **Conflict warnings** — the scheduler flags any two tasks booked at the same time.
+- **Recurring tasks** — completing a `daily`/`weekly` task auto-creates its next occurrence.
+- **Filtering** — view tasks by completion status or by pet.
+- **Streamlit UI** — add pets/tasks in the browser, see the sorted schedule, complete tasks, and watch recurrence happen live.
 
 ## Scenario
 
@@ -139,12 +150,58 @@ The `Scheduler` class in `pawpal_system.py` adds the algorithmic intelligence:
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+Launch the UI with `streamlit run app.py`. The app has three main areas: **Add a
+Pet**, **Add a Task**, and **Today's Schedule**.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+**Example workflow:**
+
+1. **Enter the owner's name** at the top (persists across interactions via
+   `st.session_state`).
+2. **Add a pet** — type a name, pick a species, click *Add pet*. This creates a
+   `Pet` object stored in session state.
+3. **Add tasks** — choose the pet, enter a description, a time (`HH:MM`), and a
+   frequency (once/daily/weekly), then click *Add task*.
+4. **View Today's Schedule** — all tasks across all pets appear in one table,
+   **sorted by time**, with a Done column.
+5. **See conflict warnings** — if two tasks share a time, a yellow
+   `st.warning` banner appears (e.g. *"⚠️ Conflict at 08:00: …"*).
+6. **Complete a task** — pick a pending task and click *Mark complete*. If it's a
+   daily/weekly task, PawPal+ shows a success message and **automatically adds
+   the next occurrence** to the schedule.
+
+**Key Scheduler behaviors shown:** chronological sorting, same-time conflict
+warnings, completion status, and automatic recurrence.
+
+**Sample CLI output** (from `python main.py`):
+
+```
+========================================
+Today's Schedule for Jordan
+========================================
+
+🐾 Biscuit (dog)
+   ⬜ 18:00  Dinner  [daily]
+   ⬜ 08:00  Morning walk  [daily]
+
+🐾 Mochi (cat)
+   ⬜ 14:30  Vet appointment  [once]
+   ⬜ 09:00  Litter box clean  [daily]
+   ⬜ 08:00  Morning meds  [daily]
+
+Sorted schedule (all pets, by time):
+   08:00  Morning walk
+   08:00  Morning meds
+   09:00  Litter box clean
+   14:30  Vet appointment
+   18:00  Dinner
+
+Checking for conflicts...
+   ⚠️ Conflict at 08:00: Biscuit's Morning walk & Mochi's Morning meds
+
+Completing Biscuit's 'Morning walk' (daily)...
+   -> auto-created next occurrence due 2026-07-08
+
+Pending tasks: 5   Completed tasks: 1
+```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
