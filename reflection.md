@@ -72,13 +72,26 @@ would be the natural next iteration.
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used AI as a phase-by-phase building partner rather than a one-shot code
+generator. We worked through the project in order — UML, then class skeletons,
+then core logic, then the algorithmic layer, then tests, then the UI — and I
+reviewed the output at each checkpoint before moving on. The most helpful prompts
+were scoped and concrete: "generate dataclass skeletons from this UML," "implement
+recurrence with `timedelta`," "add tests for sorting, recurrence, and conflicts."
+Keeping each request tied to a single phase made the AI's output easy to check and
+kept the design from drifting.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+The clearest moment was when the AI reported that the Streamlit UI "worked." I
+didn't accept that at face value — a claim that code runs isn't evidence that it
+does. I had it *prove* the UI by driving the app headlessly with Streamlit's
+`AppTest`: adding a pet, adding a task, and completing a recurring task, then
+asserting that the objects actually persisted in `st.session_state` and that a
+follow-up task was created. Only after seeing those assertions pass did I trust
+the integration. More generally, I verified AI output by running `python main.py`
+and `python -m pytest` after every change instead of reading the code and
+assuming it was correct.
 
 ---
 
@@ -110,12 +123,25 @@ and recurrence across month/year boundaries.
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I'm most satisfied with the clean separation of responsibilities and how well the
+CLI-first workflow paid off. Because the backend logic was solid and tested before
+I touched the UI, wiring up Streamlit was quick and low-drama — the hard thinking
+was already done. The recurrence feature working end-to-end (complete a daily task
+in the browser and watch tomorrow's task appear) is the moment it felt like a real
+product.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+I'd upgrade conflict detection from exact-time matching to true overlap detection
+by giving tasks a duration, so a 08:00 walk and an 08:15 feeding could be flagged.
+I'd also add input validation on the time field (reject values like `"25:00"`) and
+persist pets/tasks to disk so data survives a restart.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+AI executes; I decide. The AI was genuinely fast at turning a design into working
+code, but the important calls — how to split responsibilities between classes, what
+tradeoffs were acceptable, and whether a result could actually be trusted — were
+mine to own. Being the "lead architect" meant setting the structure up front,
+verifying every claim, and treating the AI as a very capable implementer working
+under my direction rather than an oracle to defer to.
