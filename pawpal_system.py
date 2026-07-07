@@ -22,11 +22,11 @@ class Task:
 
     def mark_complete(self) -> None:
         """Mark this task as done."""
-        raise NotImplementedError
+        self.completed = True
 
     def next_occurrence(self) -> "Task":
         """Return the next Task instance for a recurring (daily/weekly) task."""
-        raise NotImplementedError
+        raise NotImplementedError  # Implemented in Phase 4 (recurring tasks)
 
 
 @dataclass
@@ -39,11 +39,11 @@ class Pet:
 
     def add_task(self, task: Task) -> None:
         """Attach a task to this pet."""
-        raise NotImplementedError
+        self.tasks.append(task)
 
     def get_tasks(self) -> list[Task]:
         """Return this pet's tasks."""
-        raise NotImplementedError
+        return self.tasks
 
 
 @dataclass
@@ -55,11 +55,11 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Register a pet under this owner."""
-        raise NotImplementedError
+        self.pets.append(pet)
 
     def get_all_tasks(self) -> list[Task]:
         """Return every task across all of the owner's pets."""
-        raise NotImplementedError
+        return [task for pet in self.pets for task in pet.tasks]
 
 
 class Scheduler:
@@ -69,25 +69,25 @@ class Scheduler:
         self.owner = owner
 
     def todays_schedule(self) -> list[Task]:
-        """Return today's tasks, ordered for display."""
-        raise NotImplementedError
+        """Return all of the owner's tasks (ordering added in Phase 4)."""
+        return self.owner.get_all_tasks()
 
     def sort_by_time(self, tasks: list[Task]) -> list[Task]:
         """Return tasks sorted chronologically by their HH:MM time."""
-        raise NotImplementedError
+        raise NotImplementedError  # Phase 4
 
     def filter_by_status(self, completed: bool) -> list[Task]:
         """Return tasks matching the given completion status."""
-        raise NotImplementedError
+        raise NotImplementedError  # Phase 4
 
     def filter_by_pet(self, pet_name: str) -> list[Task]:
         """Return tasks belonging to the named pet."""
-        raise NotImplementedError
+        raise NotImplementedError  # Phase 4
 
     def detect_conflicts(self) -> list[str]:
         """Return warning strings for tasks scheduled at the same time."""
-        raise NotImplementedError
+        raise NotImplementedError  # Phase 4
 
     def complete_task(self, task: Task) -> None:
         """Complete a task, spawning its next occurrence if recurring."""
-        raise NotImplementedError
+        raise NotImplementedError  # Phase 4
