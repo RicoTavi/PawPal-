@@ -32,7 +32,14 @@ many `Task`s, and the `Scheduler` reads from the `Owner`.
 
 **b. Design changes**
 
-_(Filled in after implementation — Phase 2/4.)_
+The biggest change came with recurring tasks. My first instinct was to put all
+recurrence logic on `Task` (a task "reschedules itself"). During implementation
+I split the responsibility: `Task.next_occurrence()` only builds the next
+`Task` object (pure, easy to test), while `Scheduler.complete_task()` owns the
+side effect of attaching that new task to the correct pet. This kept `Task`
+free of any knowledge about pets or lists, and made recurrence testable in
+isolation. I also added a `due_date` field so recurrence could compute real
+dates with `timedelta` instead of just repeating a time string.
 
 ---
 
@@ -40,13 +47,24 @@ _(Filled in after implementation — Phase 2/4.)_
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler reasons about three things: **time of day** (tasks are ordered
+chronologically by their `HH:MM` value), **completion status** (pending vs.
+done, used for filtering), and **frequency** (once/daily/weekly, which drives
+recurrence). Time mattered most because a pet owner's real question is "what do
+I need to do next?" — so a correctly ordered, conflict-aware timeline is the
+core value. Status and frequency support that timeline rather than competing
+with it.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+My conflict detection only flags tasks that share the **exact same start time**;
+it does not model task *durations* or detect overlapping windows. For example,
+a 30-minute walk at 08:00 and a feeding at 08:15 would not be flagged even
+though they overlap in practice. I chose exact-time matching because it's simple
+to reason about, fast, and needs no duration data from the user — a reasonable
+trade for a lightweight pet-care planner where most tasks are short and the
+owner just needs a heads-up about obvious double-bookings. Modeling durations
+would be the natural next iteration.
 
 ---
 

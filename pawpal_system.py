@@ -6,8 +6,9 @@ Method bodies are implemented in Phase 2 — for now they are stubs.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 
 
 @dataclass
@@ -25,8 +26,20 @@ class Task:
         self.completed = True
 
     def next_occurrence(self) -> "Task":
-        """Return the next Task instance for a recurring (daily/weekly) task."""
-        raise NotImplementedError  # Implemented in Phase 4 (recurring tasks)
+        """Return a fresh Task for the next daily/weekly occurrence."""
+        step = {"daily": timedelta(days=1), "weekly": timedelta(weeks=1)}.get(
+            self.frequency
+        )
+        if step is None:
+            raise ValueError(f"{self.frequency!r} tasks do not recur")
+        base = self.due_date or date.today()
+        return Task(
+            description=self.description,
+            time=self.time,
+            frequency=self.frequency,
+            completed=False,
+            due_date=base + step,
+        )
 
 
 @dataclass
@@ -69,25 +82,49 @@ class Scheduler:
         self.owner = owner
 
     def todays_schedule(self) -> list[Task]:
-        """Return all of the owner's tasks (ordering added in Phase 4)."""
-        return self.owner.get_all_tasks()
+        """Return all of the owner's tasks sorted chronologically by time."""
+        return self.sort_by_time(self.owner.get_all_tasks())
 
     def sort_by_time(self, tasks: list[Task]) -> list[Task]:
         """Return tasks sorted chronologically by their HH:MM time."""
-        raise NotImplementedError  # Phase 4
+        return sorted(tasks, key=lambda task: task.time)
 
     def filter_by_status(self, completed: bool) -> list[Task]:
         """Return tasks matching the given completion status."""
-        raise NotImplementedError  # Phase 4
+        return [t for t in self.owner.get_all_tasks() if t.completed == completed]
 
     def filter_by_pet(self, pet_name: str) -> list[Task]:
-        """Return tasks belonging to the named pet."""
-        raise NotImplementedError  # Phase 4
+        """Return tasks belonging to the named pet (empty list if not found)."""
+        for pet in self.owner.pets:
+            if pet.name == pet_name:
+                return pet.get_tasks()
+        return []
 
     def detect_conflicts(self) -> list[str]:
-        """Return warning strings for tasks scheduled at the same time."""
-        raise NotImplementedError  # Phase 4
+        """Return a warning per time slot that has more than one task."""
+        by_time: dict[str, list[str]] = defaultdict(list)
+        for pet in self.owner.pets:
+            for task in pet.tasks:
+                by_time[task.time].append(f"{pet.name}'s {task.description}")
+        warnings = []
+        for time in sorted(by_time):
+            if len(by_time[time]) > 1:
+                warnings.append(
+                    f"⚠️ Conflict at {time}: " + " & ".join(by_time[time])
+                )
+        return warnings
 
-    def complete_task(self, task: Task) -> None:
-        """Complete a task, spawning its next occurrence if recurring."""
-        raise NotImplementedError  # Phase 4
+    def complete_task(self, task: Task) -> Task | None:
+        """Mark a task complete; if recurring, add its next occurrence.
+
+        Returns the newly created follow-up Task, or None for one-off tasks.
+        """
+        task.mark_complete()
+        if task.frequency not in ("daily", "weekly"):
+            return None
+        follow_up = task.next_occurrence()
+        for pet in self.owner.pets:
+            if task in pet.tasks:
+                pet.add_task(follow_up)
+                break
+        return follow_up

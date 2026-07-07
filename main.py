@@ -30,23 +30,46 @@ def main() -> None:
     owner.add_pet(biscuit)
     owner.add_pet(mochi)
 
-    # 2. Add a few tasks with different times.
-    biscuit.add_task(Task(description="Morning walk", time="08:00", frequency="daily"))
+    # 2. Add tasks OUT OF ORDER (to prove the scheduler sorts them).
     biscuit.add_task(Task(description="Dinner", time="18:00", frequency="daily"))
-    mochi.add_task(Task(description="Litter box clean", time="09:00", frequency="daily"))
+    biscuit.add_task(Task(description="Morning walk", time="08:00", frequency="daily"))
     mochi.add_task(Task(description="Vet appointment", time="14:30", frequency="once"))
+    mochi.add_task(Task(description="Litter box clean", time="09:00", frequency="daily"))
+    # A deliberate conflict: both pets need attention at 08:00.
+    mochi.add_task(Task(description="Morning meds", time="08:00", frequency="daily"))
 
-    # 3. Show the schedule, complete a task, and show it again.
-    print_schedule(owner)
-
-    print("Marking Biscuit's morning walk complete...\n")
-    biscuit.tasks[0].mark_complete()
-
-    print_schedule(owner)
-
-    # 4. Report the total task count via the Scheduler.
     scheduler = Scheduler(owner)
-    print(f"Total tasks tracked by scheduler: {len(scheduler.todays_schedule())}")
+
+    # 3. Show the schedule grouped by pet.
+    print_schedule(owner)
+
+    # 4. Show the SORTED, cross-pet schedule from the Scheduler.
+    print("Sorted schedule (all pets, by time):")
+    for task in scheduler.todays_schedule():
+        print(f"   {task.time}  {task.description}")
+    print()
+
+    # 5. Conflict detection.
+    print("Checking for conflicts...")
+    conflicts = scheduler.detect_conflicts()
+    for warning in conflicts:
+        print(f"   {warning}")
+    if not conflicts:
+        print("   No conflicts found.")
+    print()
+
+    # 6. Recurring tasks: completing a daily task spawns tomorrow's instance.
+    walk = biscuit.get_tasks()[1]  # "Morning walk", daily
+    print(f"Completing Biscuit's '{walk.description}' (daily)...")
+    follow_up = scheduler.complete_task(walk)
+    print(f"   -> auto-created next occurrence due {follow_up.due_date}\n")
+
+    print_schedule(owner)
+
+    # 7. Filtering.
+    pending = scheduler.filter_by_status(completed=False)
+    print(f"Pending tasks: {len(pending)}   Completed tasks: "
+          f"{len(scheduler.filter_by_status(completed=True))}")
 
 
 if __name__ == "__main__":
