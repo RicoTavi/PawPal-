@@ -1,6 +1,17 @@
 # PawPal+ (Module 2 Project)
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+**PawPal+** is a Streamlit app that helps a pet owner plan daily care tasks for
+their pets. You add pets and tasks, and the `Scheduler` organizes them into a
+sorted, conflict-aware daily plan.
+
+## ✨ Features
+
+- **Multi-pet management** — one `Owner` tracks many `Pet`s, each with its own tasks.
+- **Chronological scheduling** — tasks are sorted by time (`HH:MM`) into a single daily plan.
+- **Conflict warnings** — the scheduler flags any two tasks booked at the same time.
+- **Recurring tasks** — completing a `daily`/`weekly` task auto-creates its next occurrence.
+- **Filtering** — view tasks by completion status or by pet.
+- **Streamlit UI** — add pets/tasks in the browser, see the sorted schedule, complete tasks, and watch recurrence happen live.
 
 ## Scenario
 
@@ -44,51 +55,153 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Running the CLI demo (`python main.py`) exercises sorting, conflict detection,
+recurrence, and filtering:
 
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+========================================
+Today's Schedule for Jordan
+========================================
+
+🐾 Biscuit (dog)
+   ⬜ 18:00  Dinner  [daily]
+   ⬜ 08:00  Morning walk  [daily]
+
+🐾 Mochi (cat)
+   ⬜ 14:30  Vet appointment  [once]
+   ⬜ 09:00  Litter box clean  [daily]
+   ⬜ 08:00  Morning meds  [daily]
+
+Sorted schedule (all pets, by time):
+   08:00  Morning walk
+   08:00  Morning meds
+   09:00  Litter box clean
+   14:30  Vet appointment
+   18:00  Dinner
+
+Checking for conflicts...
+   ⚠️ Conflict at 08:00: Biscuit's Morning walk & Mochi's Morning meds
+
+Completing Biscuit's 'Morning walk' (daily)...
+   -> auto-created next occurrence due 2026-07-08
+
+Pending tasks: 5   Completed tasks: 1
 ```
 
 ## 🧪 Testing PawPal+
 
+Run the automated suite from the project root:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+The suite (`tests/test_pawpal.py`) covers the core behaviors and edge cases:
+
+- **Basics** — `mark_complete` flips status; adding a task grows a pet's task
+  count; `Owner` gathers tasks across pets.
+- **Sorting** — tasks are returned in chronological `HH:MM` order.
+- **Filtering** — by completion status and by pet (including an unknown pet).
+- **Recurrence** — completing a daily task creates a next-day instance; weekly
+  advances 7 days; one-off tasks create no follow-up; recurring a `once` task
+  raises.
+- **Conflict detection** — same-time tasks are flagged; different times are not.
+- **Edge cases** — a pet with no tasks yields an empty, conflict-free schedule.
+
+Sample test run:
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0
+collected 13 items
+
+tests/test_pawpal.py::test_mark_complete_changes_status PASSED           [  7%]
+tests/test_pawpal.py::test_adding_task_increases_pet_task_count PASSED   [ 15%]
+tests/test_pawpal.py::test_owner_gathers_tasks_across_pets PASSED        [ 23%]
+tests/test_pawpal.py::test_sort_returns_tasks_in_chronological_order PASSED [ 30%]
+tests/test_pawpal.py::test_filter_by_status_separates_done_and_pending PASSED [ 38%]
+tests/test_pawpal.py::test_filter_by_pet_returns_only_that_pets_tasks PASSED [ 46%]
+tests/test_pawpal.py::test_completing_daily_task_creates_next_day_instance PASSED [ 53%]
+tests/test_pawpal.py::test_completing_weekly_task_advances_seven_days PASSED [ 61%]
+tests/test_pawpal.py::test_completing_one_off_task_creates_no_follow_up PASSED [ 69%]
+tests/test_pawpal.py::test_next_occurrence_rejects_non_recurring_task PASSED [ 76%]
+tests/test_pawpal.py::test_detect_conflicts_flags_same_time_tasks PASSED [ 84%]
+tests/test_pawpal.py::test_no_conflict_when_times_differ PASSED          [ 92%]
+tests/test_pawpal.py::test_pet_with_no_tasks_produces_empty_schedule PASSED [100%]
+
+============================== 13 passed in 0.03s ==============================
 ```
+
+**Confidence level: ⭐⭐⭐⭐☆ (4/5).** All core scheduling behaviors are covered
+and passing. Docking one star because conflict detection only matches exact
+start times (durations/overlaps aren't modeled yet) — that's the first edge case
+I'd test next.
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+The `Scheduler` class in `pawpal_system.py` adds the algorithmic intelligence:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()`, `Scheduler.todays_schedule()` | Sorts tasks chronologically by their `HH:MM` string via a `sorted()` key. |
+| Filtering | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Filter by completion status (pending/done) or by pet name. |
+| Conflict handling | `Scheduler.detect_conflicts()` | Flags any time slot shared by more than one task and returns a warning string (never crashes). Exact-time match only — durations are not modeled. |
+| Recurring tasks | `Task.next_occurrence()`, `Scheduler.complete_task()` | Completing a `daily`/`weekly` task auto-creates the next instance using `timedelta` (`+1 day` / `+1 week`). |
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+Launch the UI with `streamlit run app.py`. The app has three main areas: **Add a
+Pet**, **Add a Task**, and **Today's Schedule**.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+**Example workflow:**
+
+1. **Enter the owner's name** at the top (persists across interactions via
+   `st.session_state`).
+2. **Add a pet** — type a name, pick a species, click *Add pet*. This creates a
+   `Pet` object stored in session state.
+3. **Add tasks** — choose the pet, enter a description, a time (`HH:MM`), and a
+   frequency (once/daily/weekly), then click *Add task*.
+4. **View Today's Schedule** — all tasks across all pets appear in one table,
+   **sorted by time**, with a Done column.
+5. **See conflict warnings** — if two tasks share a time, a yellow
+   `st.warning` banner appears (e.g. *"⚠️ Conflict at 08:00: …"*).
+6. **Complete a task** — pick a pending task and click *Mark complete*. If it's a
+   daily/weekly task, PawPal+ shows a success message and **automatically adds
+   the next occurrence** to the schedule.
+
+**Key Scheduler behaviors shown:** chronological sorting, same-time conflict
+warnings, completion status, and automatic recurrence.
+
+**Sample CLI output** (from `python main.py`):
+
+```
+========================================
+Today's Schedule for Jordan
+========================================
+
+🐾 Biscuit (dog)
+   ⬜ 18:00  Dinner  [daily]
+   ⬜ 08:00  Morning walk  [daily]
+
+🐾 Mochi (cat)
+   ⬜ 14:30  Vet appointment  [once]
+   ⬜ 09:00  Litter box clean  [daily]
+   ⬜ 08:00  Morning meds  [daily]
+
+Sorted schedule (all pets, by time):
+   08:00  Morning walk
+   08:00  Morning meds
+   09:00  Litter box clean
+   14:30  Vet appointment
+   18:00  Dinner
+
+Checking for conflicts...
+   ⚠️ Conflict at 08:00: Biscuit's Morning walk & Mochi's Morning meds
+
+Completing Biscuit's 'Morning walk' (daily)...
+   -> auto-created next occurrence due 2026-07-08
+
+Pending tasks: 5   Completed tasks: 1
+```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->

@@ -1,6 +1,5 @@
 classDiagram
-    %% PawPal+ system architecture (draft — Phase 1)
-    %% Kept in sync with pawpal_system.py; finalized in Phase 6.
+    %% PawPal+ final architecture (Phase 6) — matches pawpal_system.py.
 
     class Task {
         +str description
@@ -34,9 +33,10 @@ classDiagram
         +filter_by_status(completed) list~Task~
         +filter_by_pet(pet_name) list~Task~
         +detect_conflicts() list~str~
-        +complete_task(task) None
+        +complete_task(task) Task
     }
 
     Owner "1" --> "*" Pet : owns
     Pet "1" --> "*" Task : has
     Scheduler "1" --> "1" Owner : reads tasks from
+    Scheduler ..> Task : creates recurrence
