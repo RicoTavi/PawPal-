@@ -86,13 +86,23 @@ would be the natural next iteration.
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+I wrote 13 tests covering the behaviors most likely to break or matter most:
+chronological sorting, filtering by status and by pet (including an unknown
+pet), recurrence (daily → next day, weekly → +7 days, one-off → no follow-up,
+and that recurring a `once` task raises), conflict detection (same time flagged,
+different times not), and the empty edge case of a pet with no tasks. These were
+important because they *are* the product — a scheduler that sorts wrong, drops
+tasks, or silently mishandles recurrence would give the owner a wrong plan. I
+used a fixed `due_date` in the recurrence tests so they don't depend on the
+current date.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+Fairly confident — 4 out of 5. Every core path is tested and green. The main
+gap I'm aware of is that conflict detection only compares exact start times, so
+overlapping *durations* aren't caught. With more time I'd test tasks that
+overlap without sharing a start time, invalid time strings (e.g. `"25:00"`),
+and recurrence across month/year boundaries.
 
 ---
 

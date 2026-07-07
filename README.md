@@ -79,19 +79,52 @@ Pending tasks: 5   Completed tasks: 1
 
 ## 🧪 Testing PawPal+
 
+Run the automated suite from the project root:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+The suite (`tests/test_pawpal.py`) covers the core behaviors and edge cases:
+
+- **Basics** — `mark_complete` flips status; adding a task grows a pet's task
+  count; `Owner` gathers tasks across pets.
+- **Sorting** — tasks are returned in chronological `HH:MM` order.
+- **Filtering** — by completion status and by pet (including an unknown pet).
+- **Recurrence** — completing a daily task creates a next-day instance; weekly
+  advances 7 days; one-off tasks create no follow-up; recurring a `once` task
+  raises.
+- **Conflict detection** — same-time tasks are flagged; different times are not.
+- **Edge cases** — a pet with no tasks yields an empty, conflict-free schedule.
+
+Sample test run:
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0
+collected 13 items
+
+tests/test_pawpal.py::test_mark_complete_changes_status PASSED           [  7%]
+tests/test_pawpal.py::test_adding_task_increases_pet_task_count PASSED   [ 15%]
+tests/test_pawpal.py::test_owner_gathers_tasks_across_pets PASSED        [ 23%]
+tests/test_pawpal.py::test_sort_returns_tasks_in_chronological_order PASSED [ 30%]
+tests/test_pawpal.py::test_filter_by_status_separates_done_and_pending PASSED [ 38%]
+tests/test_pawpal.py::test_filter_by_pet_returns_only_that_pets_tasks PASSED [ 46%]
+tests/test_pawpal.py::test_completing_daily_task_creates_next_day_instance PASSED [ 53%]
+tests/test_pawpal.py::test_completing_weekly_task_advances_seven_days PASSED [ 61%]
+tests/test_pawpal.py::test_completing_one_off_task_creates_no_follow_up PASSED [ 69%]
+tests/test_pawpal.py::test_next_occurrence_rejects_non_recurring_task PASSED [ 76%]
+tests/test_pawpal.py::test_detect_conflicts_flags_same_time_tasks PASSED [ 84%]
+tests/test_pawpal.py::test_no_conflict_when_times_differ PASSED          [ 92%]
+tests/test_pawpal.py::test_pet_with_no_tasks_produces_empty_schedule PASSED [100%]
+
+============================== 13 passed in 0.03s ==============================
 ```
+
+**Confidence level: ⭐⭐⭐⭐☆ (4/5).** All core scheduling behaviors are covered
+and passing. Docking one star because conflict detection only matches exact
+start times (durations/overlaps aren't modeled yet) — that's the first edge case
+I'd test next.
 
 ## 📐 Smarter Scheduling
 
