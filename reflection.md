@@ -2,15 +2,37 @@
 
 ## 1. System Design
 
+**Three core actions a user can perform:**
+
+1. **Add a pet** — register a pet (name + species) under the owner.
+2. **Schedule a care task** — add a task (e.g., walk, feeding, medication) to a
+   pet with a time (HH:MM) and a frequency (once/daily/weekly).
+3. **View today's schedule** — see all tasks across every pet, sorted by time,
+   with any same-time conflicts flagged.
+
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+My initial UML has four classes with clear, separated responsibilities:
+
+- **`Task`** (dataclass): holds one activity's data — description, time,
+  frequency, completion status, and due date. It owns the small behaviors that
+  only concern a single task (`mark_complete`, `next_occurrence`).
+- **`Pet`** (dataclass): stores pet details and its own list of `Task`s, plus
+  `add_task` / `get_tasks`. A pet knows nothing about scheduling — it's just a
+  container for its tasks.
+- **`Owner`**: manages a list of `Pet`s and provides `get_all_tasks` to gather
+  every task across pets. This is the aggregation point.
+- **`Scheduler`**: the "brain." It takes an `Owner` and does the algorithmic
+  work — sorting, filtering, conflict detection, and recurrence — without
+  storing any data of its own. Keeping the logic here means the data classes
+  stay simple and the smart behavior lives in one place.
+
+The relationships are compositional: an `Owner` has many `Pet`s, a `Pet` has
+many `Task`s, and the `Scheduler` reads from the `Owner`.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+_(Filled in after implementation — Phase 2/4.)_
 
 ---
 
